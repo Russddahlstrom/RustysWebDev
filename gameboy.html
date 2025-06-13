@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Car Racer</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            background: #cd7e7e;
+            display: block;
+            margin: 20px auto;
+            border: 3px solid #ccc;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const carWidth = 50;
+        const carHeight = 100;
+
+        // Player car
+        const player = {
+            x: canvas.width / 2 - carWidth / 2,
+            y: canvas.height - carHeight - 10,
+            width: carWidth,
+            height: carHeight,
+            speed: 7,
+            dx: 0,
+            dy: 0,
+            maxUp: 50, // limit how far up player can move
+            maxDown: canvas.height - carHeight - 10
+        };
+
+        // Enemy cars
+        const enemies = [];
+        let enemySpeed = 4;
+        const enemySpawnInterval = 1500; // ms
+
+        let lives = 3;
+        let score = 0;
+        let gameOver = false;
+        let speedIncreaseInterval = 5000; // every 5 seconds speed goes up
+        let lastSpeedIncrease = Date.now();
+
+        function drawCar(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, carWidth, carHeight);
+            // wheels
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x + 5, y + 10, 10, 20);
+            ctx.fillRect(x + carWidth - 15, y + 10, 10, 20);
+            ctx.fillRect(x + 5, y + carHeight - 30, 10, 20);
+            ctx.fillRect(x + carWidth - 15, y + carHeight - 30, 10, 20);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Player
+            drawCar(player.x, player.y, 'blue');
+
+            // Enemies
+            enemies.forEach(enemy => {
+                drawCar(enemy.x, enemy.y, 'red');
+            });
+
+            // Draw score and lives
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+            ctx.fillText(`Lives: ${lives}`, 10, 60);
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            player.x += player.dx;
+            player.y += player.dy;
+
+            // Boundaries for player
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            if (player.y < player.maxUp) player.y = player.maxUp;
+            if (player.y > player.maxDown) player.y = player.maxDown;
+
+            // Move enemies down
+            enemies.forEach(enemy => {
+                enemy.y += enemySpeed;
+            });
+
+            // Remove enemies that passed the bottom and increase score
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                if (enemies[i].y > canvas.height) {
+                    enemies.splice(i, 1);
+                    score++;
+                }
+            }
+
+            // Collision check
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                if (isColliding(player, enemies[i])) {
+                    enemies.splice(i, 1);
+                    lives--;
+                    if (lives <= 0) {
+                        gameOver = true;
+                        alert(`Game Over! Your score: ${score}`);
+                        document.location.reload();
+                    }
+                }
+            }
+
+            // Speed increase over time
+            if (Date.now() - lastSpeedIncrease > speedIncreaseInterval) {
+                enemySpeed += 0.5; // increase enemy speed gradually
+                lastSpeedIncrease = Date.now();
+            }
+        }
+
+        function isColliding(a, b) {
+            return (
+                a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y
+            );
+        }
+
+        function spawnEnemy() {
+            if (gameOver) return;
+            // Random X within canvas width minus car width
+            const laneWidth = canvas.width - carWidth;
+            const x = Math.floor(Math.random() * laneWidth);
+            enemies.push({
+                x,
+                y: -carHeight,
+                width: carWidth,
+                height: carHeight
+            });
+        }
+
+        function keyDown(e) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                    player.dx = -player.speed;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    player.dx = player.speed;
+                    break;
+                case 'ArrowUp':
+                case 'w':
+                    player.dy = -player.speed;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    player.dy = player.speed;
+                    break;
+            }
+        }
+
+        function keyUp(e) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                    if (player.dx < 0) player.dx = 0;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    if (player.dx > 0) player.dx = 0;
+                    break;
+                case 'ArrowUp':
+                case 'w':
+                    if (player.dy < 0) player.dy = 0;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    if (player.dy > 0) player.dy = 0;
+                    break;
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            if (!gameOver) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        setInterval(spawnEnemy, enemySpawnInterval);
+
+        document.addEventListener('keydown', keyDown);
+        document.addEventListener('keyup', keyUp);
+
+        gameLoop();
+    </script>
+</body>
+
+</html>

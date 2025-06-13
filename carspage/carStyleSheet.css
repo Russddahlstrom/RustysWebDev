@@ -1,16 +1,13 @@
-/* font-family: Arial,
-sans-serif;
-text-align: center;
-margin: 0;
-padding: 0;
-background-image: url("assets/img/pinev2.jpg");
-background-attachment: fixed;
-background-position: center;
-background-size: cover;
-*/
+.background {
+    background-image: url("../assets/img/pinev2.jpg");
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
 
-
-/* } */
+body {
+    background-image: url("../assets/img/pinev2.jpg");
+}
 
 html {
     scroll-behavior: smooth;
@@ -81,6 +78,6 @@ iframe {
     color: #555;
 }
 
-<a {
+a {
     margin: 45px;
 }
